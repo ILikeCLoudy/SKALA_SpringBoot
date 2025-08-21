@@ -3,29 +3,29 @@ package com.SKALA.LikeCloudy.Domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
-
+@Entity
+@Table(name = "users")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
-    private @Positive Long id;
-    private @NotBlank String name;
-    private @Email String email;
-    private @Size(min = 1, max = 10) List<String> hobbies; // 취미
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
 
-    @JsonCreator
-    public User(@JsonProperty("id") Long id,
-                @JsonProperty("name") String name,
-                @JsonProperty("email") String email,
-                @JsonProperty("hobbies") List<String> hobbies) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.hobbies = hobbies;
-    }
+    @Column
+    private String name;
+
+    @Column(unique = true)
+    private String email;
 }
