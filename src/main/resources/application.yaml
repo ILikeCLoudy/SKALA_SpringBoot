@@ -25,4 +25,4 @@ spring:
 logging:
   level:
     root: INFO
-    com.sk.skala.firstspring: DEBUG
+    com.SKALA.LikeCloudy: DEBUG
