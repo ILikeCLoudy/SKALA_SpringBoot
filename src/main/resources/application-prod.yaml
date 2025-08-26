@@ -1,27 +1,27 @@
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3302/SKALA
-    username: root
-    password: '0719'
-
-  thymeleaf:
-    cache: false
+    url: jdbc:mariadb://a372be0564d58424b9f503dd696e766a-1897922469.ap-northeast-2.elb.amazonaws.com:3306/CLOUD?allowMultiQueries=true
+    driver-class-name: org.mariadb.jdbc.Driver
+    username: cloud
+    password: Skala25a!23$
 
   jpa:
     open-in-view: true
-    show-sql: true
+    generate-ddl: true
+    database-platform: org.hibernate.dialect.MariaDBDialect
     hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+      ddl-auto: update  # 무조건 테블이 있으면 삭제후 생성은 create (create-drop | update | create | none)
+    show-sql: false
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    root: INFO
 
-
-server:
-  port: 8086
+developer:
+  owner:
+    name: prod-user
+    role: operator
+    level: cl3
+  team:
+    position: team-project
+    detail: "class3"

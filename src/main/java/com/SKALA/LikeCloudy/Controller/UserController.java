@@ -3,16 +3,14 @@ package com.SKALA.LikeCloudy.Controller;
 import java.util.List;
 import java.util.Optional;
 
-import com.SKALA.LikeCloudy.Domain.User;
-import com.SKALA.LikeCloudy.Exception.BadRequestException;
-import com.SKALA.LikeCloudy.Exception.InternalServerException;
 import com.SKALA.LikeCloudy.Service.UserService;
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.RestController;
+
+import com.SKALA.LikeCloudy.Domain.User;
 
 @Slf4j
 @RestController
@@ -27,70 +25,80 @@ public class UserController {
 
     // 모든 사용자 조회 및 특정 사용자 이름으로 필터링
     @GetMapping("/users")
-    public List<User> getAllUsers(@RequestParam Optional<String> name) {
-        log.debug(name.toString());
-        return userService.findAll(name);
-    }
-
-    // GET: 특정 사용자 가져오기
-    @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable long id) {
-        return userService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // POST: 사용자 추가
-    @PostMapping("/users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        User created = userService.create(user);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
-    }
-
-    // DELETE: 사용자 삭제
-    @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable long id) {
-        boolean deleted = userService.delete(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
+    public ResponseEntity<List<User>> getAllUsers(@RequestParam Optional<String> name) {
+        try {
+            List<User> users = userService.findAll(name);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            log.error("사용자 목록 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.notFound().build();
     }
 
-    // PUT: 사용자 정보 수정
+    // 지역별 사용자 조회
+    @GetMapping("/users/region/{regionId}")
+    public ResponseEntity<List<User>> getUsersByRegionId(@PathVariable Long regionId) {
+        try {
+            List<User> users = userService.findByRegionId(regionId);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            log.error("지역별 사용자 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 지역명으로 사용자 조회
+    @GetMapping("/users/region-name/{regionName}")
+    public ResponseEntity<List<User>> getUsersByRegionName(@PathVariable String regionName) {
+        try {
+            List<User> users = userService.findByRegionName(regionName);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            log.error("지역명별 사용자 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 사용자 생성
+    @PostMapping("/users")
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        try {
+            User createdUser = userService.create(user);
+            return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            log.warn("사용자 생성 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            log.error("사용자 생성 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 사용자 삭제
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        try {
+            return userService.delete(id) ? ResponseEntity.noContent().build()
+                    : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("사용자 삭제 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 사용자 수정
     @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        return userService.update(id, updatedUser)
-                .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
-    @GetMapping("/400")
-    public void throwBadRequest() {
-        throw new BadRequestException("ㅇㄴㄹㅇㄴ잘못된 요청입니다.");
-    }
-
-    // 500 예외 발생
-    @GetMapping("/500")
-    public void throwInternalServerError() {
-        throw new InternalServerException("ㄴㅇㄹㅇㄴㄹ서버 내부 오류가 발생했습니다.");
-    }
-
-    // 전역 예외 처리기로 전달되는 예외 발생 (ControllerAdvice에서 처리)
-    @GetMapping("/global")
-    public void throwGlobalException() {
-        throw new RuntimeException("ㄴㅇㄹㅇㄴㄹ이 예외는 전역 예외 처리기로 전달됩니다.");
-    }
-
-    // 컨트롤러 내부에서 400 Bad Request 예외 처리
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<String> handleBadRequest(BadRequestException ex) {
-        return ResponseEntity.badRequest().body("내 에러 : " + ex.getMessage());
-    }
-
-    // 컨트롤러 내부에서 500 Internal Server Error 예외 처리
-    @ExceptionHandler(InternalServerException.class)
-    public ResponseEntity<String> handleInternalServerError(InternalServerException ex) {
-        return ResponseEntity.status(500).body("내 에러 : " + ex.getMessage());
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
+        try {
+            return userService.update(id, updatedUser)
+                    .map(user -> ResponseEntity.ok(user))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            log.warn("사용자 수정 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            log.error("사용자 수정 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
